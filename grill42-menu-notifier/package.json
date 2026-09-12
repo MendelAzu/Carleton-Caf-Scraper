@@ -1,0 +1,22 @@
+{
+  "name": "grill42-menu-notifier",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Scheduled Grill 42 menu notifications for Carleton University's Teraanga Commons Dining Hall.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "luxon": "^3.5.0",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.16",
+    "playwright": "^1.49.1"
+  }
+}

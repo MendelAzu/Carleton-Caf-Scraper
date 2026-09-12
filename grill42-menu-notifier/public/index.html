@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grill 42 Menu Notifier</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="eyebrow">Teraanga Commons Dining Hall</p>
+      <h1>Grill 42 Menu Notifier</h1>
+      <p class="intro">Get the latest menu from The Grill 42 delivered to your inbox on the dining hall’s schedule. And freeload off your friends that live on campus :)</p>
+    </section>
+
+    <section class="panel setup-panel" aria-labelledby="settings-title">
+      <div class="panel-heading">
+        <div><p class="eyebrow">Notifications</p><h2 id="settings-title">Your email</h2></div>
+        <span id="saved-recipient" class="quiet">Not saved</span>
+      </div>
+      <form id="email-form" class="email-form">
+        <label for="email">Email address</label>
+        <div class="form-row"><input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required><button type="submit">Save email</button></div>
+      </form>
+      <div class="actions"><button id="test-email" class="secondary" type="button">Send test email</button><button id="check-menu" class="dark" type="button">Check menu now</button></div>
+      <p id="action-status" class="status" role="status"></p>
+    </section>
+
+    <section class="dashboard">
+      <article class="panel menu-panel" aria-labelledby="menu-title">
+        <div class="panel-heading"><div><p class="eyebrow">Latest retrieval</p><h2 id="menu-title">The Grill 42</h2></div><span id="menu-time" class="quiet">No check yet</span></div>
+        <div id="menu-items" class="menu-items"><p class="empty">No menu has been retrieved yet.</p></div>
+        <a class="source-link" href="https://carleton.mydininghub.ca/en/location/teraanga-commons-dining-hall" target="_blank" rel="noreferrer">Open dining hall menu ↗</a>
+      </article>
+      <aside class="panel status-panel" aria-labelledby="schedule-title">
+        <p class="eyebrow">Automation</p><h2 id="schedule-title">Next check</h2>
+        <time id="next-check" class="next-check">Loading...</time>
+        <div class="rule"></div><p class="eyebrow">Last status</p><p id="last-status" class="last-status">Waiting for the first check.</p>
+        <p id="timezone" class="quiet"></p>
+      </aside>
+    </section>
+  </main>
+  <script src="/script.js"></script>
+</body>
+</html>
