@@ -8,6 +8,7 @@ let nextScheduledCheck = null;
 const completedRuns = new Set();
 
 function getNextScheduledCheck() {
+  updateNextScheduledCheck();
   return nextScheduledCheck;
 }
 

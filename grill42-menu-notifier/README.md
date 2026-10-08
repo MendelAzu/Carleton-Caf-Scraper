@@ -71,7 +71,22 @@ TIMEZONE=America/Toronto
 CHECK_SCHEDULES=1 11 * * *;31 16 * * *
 ```
 
-These are server-side jobs, so the browser does not need to stay open.
+When running with `npm start`, these are server-side jobs, so the browser does not need to stay open.
+
+## Vercel deployment
+
+The app is configured as a Vercel serverless function. `vercel.json` schedules the Toronto checks using UTC cron entries for both daylight-saving offsets; the endpoint verifies which entry corresponds to the configured local time. If you change `TIMEZONE` or `CHECK_SCHEDULES`, update the corresponding UTC schedules in `vercel.json` too. Each Vercel cron entry runs once a day, compatible with Vercel Hobby scheduling precision.
+
+Set these variables in the Vercel project (Production, and Preview if needed): `SUPABASE_URL`, `SUPABASE_SECRET`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_FROM`, `TIMEZONE`, `CHECK_SCHEDULES`, and a long random `CRON_SECRET`. The cron endpoint requires `CRON_SECRET` as a bearer token. Do not deploy `VERCEL_TOKEN` as an application environment variable.
+
+Deploy from this directory with:
+
+```bash
+npx vercel
+npx vercel --prod
+```
+
+The deploy CLI will link or create the Vercel project. Add the required environment variables through the Vercel dashboard or `vercel env add` before production deployment.
 
 ## Scraping behavior
 
@@ -84,5 +99,6 @@ The scraper opens the live page with Playwright, waits for the client-rendered c
 - `POST /api/subscribe` - subscribe `{ "email": "you@example.com" }` to scheduled menu emails
 - `POST /api/test-email` - send the current menu to the subscribed email in `{ "email": "you@example.com" }`
 - `GET /api/status` - last result, next check, timezone, and subscriber count
+- `GET /api/cron` - authenticated Vercel scheduled check; requires `CRON_SECRET`
 
 The source page is [Carleton Dining Hall](https://carleton.mydininghub.ca/en/location/teraanga-commons-dining-hall).

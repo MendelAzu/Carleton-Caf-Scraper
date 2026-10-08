@@ -8,12 +8,19 @@ function cleanText(value) {
 }
 
 async function scrapeMenu(url = process.env.DINING_HALL_URL || DEFAULT_URL) {
-  const browser = await chromium.launch({ headless: true });
+  const serverless = Boolean(process.env.VERCEL);
+  const browser = process.env.VERCEL
+    ? await launchServerlessBrowser()
+    : await chromium.launch({ headless: true });
 
   try {
     const page = await browser.newPage();
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
-    await page.waitForFunction(() => document.body && /grill 42/i.test(document.body.innerText), null, { timeout: 30000 });
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: serverless ? 25000 : 45000 });
+    await page.waitForFunction(
+      () => document.body && /grill 42/i.test(document.body.innerText),
+      null,
+      { timeout: serverless ? 20000 : 30000 }
+    );
     await page.waitForTimeout(1500);
 
     const menu = await page.evaluate(() => {
@@ -79,6 +86,18 @@ async function scrapeMenu(url = process.env.DINING_HALL_URL || DEFAULT_URL) {
   } finally {
     await browser.close();
   }
+}
+
+async function launchServerlessBrowser() {
+  if (!process.env.AWS_EXECUTION_ENV && !process.env.AWS_LAMBDA_JS_RUNTIME) {
+    process.env.AWS_LAMBDA_JS_RUNTIME = 'nodejs20.x';
+  }
+  const serverlessChromium = require('@sparticuz/chromium');
+  return chromium.launch({
+    args: serverlessChromium.args,
+    executablePath: await serverlessChromium.executablePath(),
+    headless: true
+  });
 }
 
 module.exports = { scrapeMenu, STATION_NAME, DEFAULT_URL };

@@ -1,11 +1,13 @@
 require('dotenv').config();
 
+const crypto = require('crypto');
 const express = require('express');
+const { DateTime } = require('luxon');
 const path = require('path');
 const { scrapeMenu } = require('./services/scraper');
 const { sendMenuEmail, sendTestEmail } = require('./services/email');
 const { connectToDatabase, getSubscriberCount, subscribeEmail } = require('./services/subscriptions');
-const { startScheduler, getNextScheduledCheck, timezone } = require('./services/scheduler');
+const { startScheduler, getNextScheduledCheck, schedules, timezone } = require('./services/scheduler');
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -16,6 +18,32 @@ const processedScheduledKeys = new Set();
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+function isAuthorizedCron(request) {
+  const secret = process.env.CRON_SECRET;
+  const authorization = request.get('authorization') || '';
+  if (!secret || !authorization.startsWith('Bearer ')) return false;
+
+  const provided = Buffer.from(authorization.slice('Bearer '.length));
+  const expected = Buffer.from(secret);
+  return provided.length === expected.length && crypto.timingSafeEqual(provided, expected);
+}
+
+function isExpectedCronSchedule(expression) {
+  const match = expression && expression.match(/^(\d+)\s+(\d+)\s+\*\s+\*\s+\*$/);
+  if (!match) return false;
+
+  const now = DateTime.now().setZone(timezone);
+  return schedulesForCron().some((schedule) => {
+    const [minute, hour] = schedule.split(/\s+/).map(Number);
+    const expectedUtc = now.set({ hour, minute, second: 0, millisecond: 0 }).toUTC();
+    return expectedUtc.minute === Number(match[1]) && expectedUtc.hour === Number(match[2]);
+  });
+}
+
+function schedulesForCron() {
+  return schedules.filter((schedule) => /^\d+\s+\d+\s+\*\s+\*\s+\*$/.test(schedule));
+}
 
 async function runMenuCheck({ sendEmail = false, scheduledKey = null } = {}) {
   if (scheduledKey && processedScheduledKeys.has(scheduledKey)) return currentMenu;
@@ -38,8 +66,30 @@ async function runMenuCheck({ sendEmail = false, scheduledKey = null } = {}) {
   }
 }
 
-app.get('/api/menu', (request, response) => {
-  response.json(currentMenu || { station: 'The Grill 42', items: [], checkedAt: null, source, message: 'No menu has been retrieved yet.' });
+app.get('/api/menu', async (request, response) => {
+  try {
+    response.json(currentMenu || await runMenuCheck());
+  } catch (error) {
+    response.status(502).json({ error: error.message, status: lastCheck });
+  }
+});
+
+app.get('/api/cron', async (request, response) => {
+  if (!isAuthorizedCron(request)) {
+    return response.status(401).json({ error: 'Unauthorized.' });
+  }
+
+  const expression = request.get('x-vercel-cron-schedule');
+  if (!isExpectedCronSchedule(expression)) {
+    return response.json({ skipped: true, message: 'This UTC cron schedule does not match a local menu-check time today.' });
+  }
+
+  const scheduledKey = `${DateTime.now().setZone(timezone).toFormat('yyyy-LL-dd-HH-mm')}:${expression}`;
+  try {
+    response.json(await runMenuCheck({ sendEmail: true, scheduledKey }));
+  } catch (error) {
+    response.status(502).json({ error: error.message, status: lastCheck });
+  }
 });
 
 app.post('/api/check-menu', async (request, response) => {
@@ -104,7 +154,11 @@ async function startServer() {
   });
 }
 
-startServer().catch((error) => {
-  console.error(`[server] Startup failed: ${error.stack || error.message}`);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  startServer().catch((error) => {
+    console.error(`[server] Startup failed: ${error.stack || error.message}`);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { app, runMenuCheck };
