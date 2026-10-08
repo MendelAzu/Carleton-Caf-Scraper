@@ -27,7 +27,12 @@ function escapeHtml(value) {
 }
 
 async function request(url, options = {}) {
-  const response = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...options });
+  let response;
+  try {
+    response = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...options });
+  } catch (error) {
+    throw new Error('Cannot connect to the server. Start it with npm start, then open http://localhost:3000.');
+  }
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || 'Request failed.');
   return body;
@@ -40,25 +45,29 @@ async function refresh() {
   $('#last-status').textContent = status.lastCheck.message;
   $('#last-status').classList.toggle('error', status.lastCheck.success === false);
   $('#timezone').textContent = `Server time zone: ${status.timezone}`;
-  if (status.recipient) { $('#email').value = status.recipient; $('#saved-recipient').textContent = status.recipient; }
+  $('#subscription-count').textContent = `${status.subscriberCount} subscribed`;
 }
 
 $('#email-form').addEventListener('submit', async (event) => {
   event.preventDefault();
+  const button = event.currentTarget.querySelector('button[type="submit"]');
+  button.disabled = true;
   try {
-    const result = await request('/api/save-email', { method: 'POST', body: JSON.stringify({ email: $('#email').value }) });
-    $('#saved-recipient').textContent = result.email; setStatus(result.message);
-  } catch (error) { setStatus(error.message, true); }
-});
-
-$('#check-menu').addEventListener('click', async (event) => {
-  const button = event.currentTarget; button.disabled = true; setStatus('Checking the dining hall menu...');
-  try { await request('/api/check-menu', { method: 'POST' }); await refresh(); setStatus('Menu check completed.'); } catch (error) { setStatus(error.message, true); } finally { button.disabled = false; }
+    const result = await request('/api/subscribe', { method: 'POST', body: JSON.stringify({ email: $('#email').value }) });
+    setStatus(result.message);
+    await refresh();
+  } catch (error) { setStatus(error.message, true); } finally { button.disabled = false; }
 });
 
 $('#test-email').addEventListener('click', async (event) => {
   const button = event.currentTarget; button.disabled = true; setStatus('Sending test email...');
-  try { const result = await request('/api/test-email', { method: 'POST' }); setStatus(result.message); } catch (error) { setStatus(error.message, true); } finally { button.disabled = false; }
+  try {
+    const result = await request('/api/test-email', {
+      method: 'POST',
+      body: JSON.stringify({ email: $('#email').value })
+    });
+    setStatus(result.message);
+  } catch (error) { setStatus(error.message, true); } finally { button.disabled = false; }
 });
 
 refresh().catch((error) => setStatus(error.message, true));

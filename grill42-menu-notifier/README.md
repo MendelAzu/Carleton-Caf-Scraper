@@ -12,14 +12,40 @@ A Node.js and Express website that checks the Carleton University Teraanga Commo
    npx playwright install chromium
    ```
 
-3. Copy `.env.example` to `.env` and fill in the SMTP values.
+3. Create a Supabase project and a `subscriptions` table by running this SQL in the Supabase SQL Editor:
+
+   ```sql
+   create table public.subscriptions (
+     email text primary key,
+     subscribed_at timestamptz not null default now()
+   );
+
+   alter table public.subscriptions enable row level security;
+   ```
+
+   In the project settings, copy the Project URL and a server-side secret/service-role API key. Add them to `.env` as `SUPABASE_URL` and `SUPABASE_SECRET`, along with the SMTP values:
+
+   ```env
+   SUPABASE_URL=https://<project-ref>.supabase.co
+   SUPABASE_SECRET=<your-server-side-secret-or-service-role-key>
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_SECURE=false
+   SMTP_USER=youraddress@gmail.com
+   SMTP_PASSWORD=your-16-character-app-password
+   EMAIL_FROM=Grill 42 Menu Notifier <youraddress@gmail.com>
+   ```
+
+   `SUPABASE_SECRET` is read only by the server (`SUPABASE_TOKEN` is also accepted as a fallback). Use a server-side secret/service-role key with database access, not a publishable/anon key or a user's temporary JWT; the server-side key bypasses Row Level Security and must never be sent to browser code. Keep `.env` private and never commit it.
 4. Start the server:
 
    ```bash
    npm start
    ```
 
-5. Open `http://localhost:3000`.
+   Run this command while your terminal is inside `grill42-menu-notifier`. From the parent folder, use `npm --prefix .\grill42-menu-notifier start`.
+
+5. Open `http://localhost:3000` in your browser. Do not open `public/index.html` directly; the page needs the running Express server for its API requests.
 
 For Gmail, use these SMTP values and a Google App Password, not your regular Gmail password:
 
@@ -34,7 +60,7 @@ EMAIL_FROM=Grill 42 Menu Notifier <youraddress@gmail.com>
 
 Enable two-step verification on the Google account, create an App Password in the Google Account security settings, and replace the placeholder password in `.env`. Never commit `.env` or share its contents.
 
-The saved recipient is stored locally in `data/recipient.json`. The `data` directory is created after the first email is saved and should not be committed. SMTP credentials are only read by the server and are never sent to the browser.
+Email subscriptions are stored in the Supabase `public.subscriptions` table. Email addresses are normalized to lowercase and the email primary key prevents duplicate subscriptions. If a previous local `data/recipient.json` exists, its email is migrated to Supabase at startup. Supabase credentials are only read by the server and are never sent to the browser.
 
 ## Scheduling
 
@@ -55,8 +81,8 @@ The scraper opens the live page with Playwright, waits for the client-rendered c
 
 - `GET /api/menu` - current Grill 42 menu
 - `POST /api/check-menu` - run a manual scrape
-- `POST /api/save-email` - save `{ "email": "you@example.com" }`
-- `POST /api/test-email` - send the current menu to the saved recipient
-- `GET /api/status` - last result, next check, timezone, and saved recipient
+- `POST /api/subscribe` - subscribe `{ "email": "you@example.com" }` to scheduled menu emails
+- `POST /api/test-email` - send the current menu to the subscribed email in `{ "email": "you@example.com" }`
+- `GET /api/status` - last result, next check, timezone, and subscriber count
 
 The source page is [Carleton Dining Hall](https://carleton.mydininghub.ca/en/location/teraanga-commons-dining-hall).

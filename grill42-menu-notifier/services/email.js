@@ -1,9 +1,5 @@
-const fs = require('fs');
-const path = require('path');
 const nodemailer = require('nodemailer');
-
-const dataDirectory = path.join(__dirname, '..', 'data');
-const recipientFile = path.join(dataDirectory, 'recipient.json');
+const { getSubscriberEmails, hasSubscription } = require('./subscriptions');
 
 function getTransporter() {
   const required = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD', 'EMAIL_FROM'];
@@ -24,19 +20,6 @@ function getTransporter() {
   });
 }
 
-function getRecipientEmail() {
-  try {
-    return JSON.parse(fs.readFileSync(recipientFile, 'utf8')).email || null;
-  } catch {
-    return null;
-  }
-}
-
-function saveRecipientEmail(email) {
-  fs.mkdirSync(dataDirectory, { recursive: true });
-  fs.writeFileSync(recipientFile, JSON.stringify({ email }, null, 2));
-}
-
 function formatMenuText(menu, checkedAt, timezone) {
   const date = new Date(checkedAt).toLocaleDateString('en-US', { timeZone: timezone, year: 'numeric', month: 'long', day: 'numeric' });
   const time = new Date(checkedAt).toLocaleTimeString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit' });
@@ -47,9 +30,7 @@ function formatMenuText(menu, checkedAt, timezone) {
   return `Hello,\n\nHere is what is being served at The Grill 42 at Teraanga Commons Dining Hall.\n\nDate: ${date}\nTime: ${time}\n\nThe Grill 42:\n\n${items}\n\nSource:\n${menu.source}\n\nEnjoy your meal!`;
 }
 
-async function sendMenuEmail(menu, checkedAt = new Date().toISOString()) {
-  const recipient = getRecipientEmail();
-  if (!recipient) throw new Error('No recipient email has been saved.');
+async function sendToRecipient(recipient, menu, checkedAt) {
   const timezone = process.env.TIMEZONE || 'America/Toronto';
   const localDate = new Date(checkedAt).toLocaleDateString('en-US', { timeZone: timezone, year: 'numeric', month: 'long', day: 'numeric' });
   const localTime = new Date(checkedAt).toLocaleTimeString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit' });
@@ -69,8 +50,29 @@ async function sendMenuEmail(menu, checkedAt = new Date().toISOString()) {
   }
 }
 
-async function sendTestEmail(menu) {
-  return sendMenuEmail(menu, menu.checkedAt);
+async function sendMenuEmail(menu, checkedAt = new Date().toISOString()) {
+  const recipients = await getSubscriberEmails();
+  if (!recipients.length) throw new Error('There are no subscribed email addresses.');
+
+  const failures = [];
+  for (const recipient of recipients) {
+    try {
+      await sendToRecipient(recipient, menu, checkedAt);
+    } catch (error) {
+      console.error('[email] Subscriber delivery failed:', error);
+      failures.push(error);
+    }
+  }
+  if (failures.length) {
+    throw new AggregateError(failures, `Menu email delivery failed for ${failures.length} of ${recipients.length} subscriber(s).`);
+  }
 }
 
-module.exports = { getRecipientEmail, saveRecipientEmail, sendMenuEmail, sendTestEmail };
+async function sendTestEmail(menu, recipient) {
+  if (!await hasSubscription(recipient)) {
+    throw new Error('Subscribe this email address before requesting a test email.');
+  }
+  return sendToRecipient(recipient.trim().toLowerCase(), menu, menu.checkedAt);
+}
+
+module.exports = { sendMenuEmail, sendTestEmail };
