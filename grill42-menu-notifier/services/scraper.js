@@ -29,24 +29,23 @@ async function scrapeMenu(url = process.env.DINING_HALL_URL || DEFAULT_URL) {
         const style = window.getComputedStyle(element);
         return style.display !== 'none' && style.visibility !== 'hidden' && element.getBoundingClientRect().height > 0;
       };
-      const isStationHeading = (element) => normalize(element.textContent).toLowerCase() === 'grill 42';
+      const isStationHeading = (element) => normalize(element.textContent).toLowerCase().startsWith('grill 42');
       const heading = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6,[role="heading"]')]
         .find((element) => isVisible(element) && isStationHeading(element));
-      const anchorTarget = document.getElementById('295922');
-      const stationLink = [...document.querySelectorAll('a')]
-        .find((element) => normalize(element.textContent).toLowerCase() === 'grill 42' && /#295922$/.test(element.href));
 
-      let root = anchorTarget || heading || stationLink;
+      let root = heading;
       if (!root) return { found: false, items: [] };
 
-      if (root === heading || root === stationLink) {
-        root = root.closest('section, article, [data-testid], [class*="station"], [class*="Station"]') || root.parentElement;
-      }
-      if (root && root.id === '295922' && root.parentElement) {
-        root = root.parentElement;
-      }
+      root = root.closest('section') || root.closest('article, [data-testid], [class*="station"], [class*="Station"]') || root.parentElement;
 
-      const candidates = [...root.querySelectorAll('ul[aria-label="Grill 42"] > li')]
+      const itemList = [...root.children].find((element) => {
+        if (element.tagName !== 'UL') return false;
+        const label = normalize(element.getAttribute('aria-label')).toLowerCase();
+        return !label || label.startsWith('grill 42');
+      });
+      if (!itemList) return { found: true, items: [] };
+
+      const candidates = [...itemList.querySelectorAll(':scope > li')]
         .filter(isVisible)
         .map((itemContainer) => {
           const nameElement = itemContainer.querySelector('h4,h5,h6,[role="heading"]');

@@ -92,7 +92,7 @@ The deploy CLI will link or create the Vercel project. Add the required environm
 
 ## Scraping behavior
 
-The scraper opens the live page with Playwright, waits for the client-rendered content to include Grill 42, and scopes extraction to the observed Grill 42 station target (`#295922`) or the exact visible station heading. It never scans the other station sections. If the station cannot be found, the check fails with a clear server-console error. A page with no items is reported as an empty menu rather than crashing.
+The scraper opens the live page with Playwright, waits for the client-rendered content to include Grill 42, and scopes extraction to the visible Grill 42 station heading and its directly labeled item list. This accommodates station label and section-ID changes while avoiding other station sections. If the station cannot be found, the check fails with a clear server-console error. A page with no items is reported as an empty menu rather than crashing.
 
 ## API
 

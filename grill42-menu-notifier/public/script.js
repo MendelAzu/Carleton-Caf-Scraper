@@ -38,12 +38,34 @@ async function request(url, options = {}) {
 }
 
 async function refresh() {
-  const [menu, status] = await Promise.all([request('/api/menu'), request('/api/status')]);
-  renderMenu(menu);
-  $('#next-check').textContent = formatDate(status.nextScheduledCheck);
-  $('#last-status').textContent = status.lastCheck.message;
-  $('#last-status').classList.toggle('error', status.lastCheck.success === false);
-  $('#timezone').textContent = `Server time zone: ${status.timezone}`;
+  const [menuResult, statusResult] = await Promise.allSettled([
+    request('/api/menu'),
+    request('/api/status')
+  ]);
+  let error;
+
+  if (statusResult.status === 'fulfilled') {
+    const status = statusResult.value;
+    $('#next-check').textContent = formatDate(status.nextScheduledCheck);
+    $('#last-status').textContent = status.lastCheck.message;
+    $('#last-status').classList.toggle('error', status.lastCheck.success === false);
+    $('#timezone').textContent = `Server time zone: ${status.timezone}`;
+  } else {
+    error = statusResult.reason;
+    $('#next-check').textContent = 'Unavailable';
+    $('#last-status').textContent = error.message;
+    $('#last-status').classList.add('error');
+  }
+
+  if (menuResult.status === 'fulfilled') {
+    renderMenu(menuResult.value);
+  } else {
+    error = error || menuResult.reason;
+    $('#last-status').textContent = `Menu check failed: ${menuResult.reason.message}`;
+    $('#last-status').classList.add('error');
+  }
+
+  if (error) throw error;
 }
 
 $('#email-form').addEventListener('submit', async (event) => {
