@@ -63,6 +63,17 @@ async function subscribeEmail(email) {
   return addSubscription(email);
 }
 
+async function unsubscribeEmail(email) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const { data, error } = await getSupabaseClient()
+    .from('subscriptions')
+    .delete()
+    .eq('email', normalizedEmail)
+    .select('email');
+  throwIfError(error, 'subscription removal');
+  return { unsubscribed: data.length > 0 };
+}
+
 async function hasSubscription(email) {
   const { data, error } = await getSupabaseClient()
     .from('subscriptions')
@@ -97,4 +108,4 @@ async function getSubscriberCount() {
   return count;
 }
 
-module.exports = { connectToDatabase, getSubscriberEmails, getSubscriberCount, hasSubscription, subscribeEmail };
+module.exports = { connectToDatabase, getSubscriberEmails, getSubscriberCount, hasSubscription, subscribeEmail, unsubscribeEmail };

@@ -3,44 +3,74 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Grill 42 Menu Notifier</title>
+  <meta name="theme-color" content="#e31b23">
+  <meta name="description" content="Get the latest Grill 42 menu from Carleton University's Teraanga Commons Dining Hall.">
+  <title>Grill 42 Menu | Independent Menu Notifier</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="wordmark" href="/" aria-label="Grill 42 Menu home">
+        <span>Grill 42</span>
+        <small>MENU NOTIFIER</small>
+      </a>
+      <span class="header-divider" aria-hidden="true"></span>
+      <span class="header-context">Independent menu updates</span>
+      <a class="header-link" href="https://carleton.mydininghub.ca/en/location/teraanga-commons-dining-hall" target="_blank" rel="noreferrer">Dining hall menu <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
   <main class="shell">
     <section class="hero">
-      <p class="eyebrow">teraanga-commons-dining-hall</p>
-      <h1>Grill 42 Tracker</h1>
-      <p class="intro">Subscribe with your email to get the latest menu from The Grill 42 delivered to your inbox on the dining hall’s schedule.</p>
+      <div>
+        <p class="eyebrow">Teraanga Commons · Campus dining</p>
+        <h1>Grill 42 menu</h1>
+        <p class="intro">Your daily look at what’s cooking at The Grill 42. Subscribe to get the latest menu delivered straight to your inbox.</p>
+      </div>
+      <p class="hero-note"><strong>Independent menu notifier</strong>Not an official Carleton University website. Please don't sue me</p>
     </section>
 
-    <section class="panel setup-panel" aria-labelledby="settings-title">
+    <section id="main-content" class="panel setup-panel" aria-labelledby="settings-title">
       <div class="panel-heading">
-        <div><p class="eyebrow">Notifications</p><h2 id="settings-title">Subscribe by email</h2></div>
-        <span id="subscription-count" class="quiet">Loading subscribers...</span>
+        <div><h2 id="settings-title">Subscribe by email</h2></div>
       </div>
       <form id="email-form" class="email-form">
         <label for="email">Email address</label>
         <div class="form-row"><input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required><button type="submit">Subscribe</button></div>
       </form>
-      <div class="actions"><button id="test-email" class="secondary" type="button">Send me a test email</button></div>
       <p id="action-status" class="status" role="status"></p>
     </section>
 
     <section class="dashboard">
       <article class="panel menu-panel" aria-labelledby="menu-title">
-        <div class="panel-heading"><div><p class="eyebrow">Latest retrieval</p><h2 id="menu-title">The Grill 42</h2></div><span id="menu-time" class="quiet">No check yet</span></div>
+        <div class="panel-heading"><div><p class="eyebrow">Today at Teraanga Commons</p><h2 id="menu-title">On the menu</h2></div><span id="menu-time" class="quiet">No check yet</span></div>
         <div id="menu-items" class="menu-items"><p class="empty">No menu has been retrieved yet.</p></div>
         <a class="source-link" href="https://carleton.mydininghub.ca/en/location/teraanga-commons-dining-hall" target="_blank" rel="noreferrer">Open dining hall menu ↗</a>
       </article>
       <aside class="panel status-panel" aria-labelledby="schedule-title">
-        <p class="eyebrow">Automation</p><h2 id="schedule-title">Next check</h2>
+        <p class="eyebrow">Menu updates</p><h2 id="schedule-title">Next check</h2>
         <time id="next-check" class="next-check">Loading...</time>
         <div class="rule"></div><p class="eyebrow">Last status</p><p id="last-status" class="last-status">Waiting for the first check.</p>
         <p id="timezone" class="quiet"></p>
       </aside>
     </section>
+    <section class="panel setup-panel unsubscribe-panel" aria-labelledby="unsubscribe-title">
+      <div class="panel-heading">
+        <div><h2 id="unsubscribe-title">Unsubscribe from email updates :( </h2></div>
+      </div>
+      <form id="unsubscribe-form" class="email-form">
+        <label for="unsubscribe-email">Email address</label>
+        <div class="form-row"><input id="unsubscribe-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required><button type="submit">Unsubscribe</button></div>
+      </form>
+      <p id="unsubscribe-status" class="status" role="status"></p>
+    </section>
   </main>
+  <footer class="site-footer">
+    <span>Independent menu notifier · Not affiliated with Carleton University.</span>
+    <a href="https://carleton.mydininghub.ca/en/location/teraanga-commons-dining-hall" target="_blank" rel="noreferrer">Official dining hall menu</a>
+    <span>© 2026 Mendel Productions</span>
+  </footer>
   <script src="/script.js"></script>
 </body>
 </html>

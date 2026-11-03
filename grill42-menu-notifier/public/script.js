@@ -6,8 +6,7 @@ function formatDate(value) {
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 }
 
-function setStatus(message, isError = false) {
-  const element = $('#action-status');
+function setStatus(element, message, isError = false) {
   element.textContent = message;
   element.classList.toggle('error', isError);
 }
@@ -45,7 +44,6 @@ async function refresh() {
   $('#last-status').textContent = status.lastCheck.message;
   $('#last-status').classList.toggle('error', status.lastCheck.success === false);
   $('#timezone').textContent = `Server time zone: ${status.timezone}`;
-  $('#subscription-count').textContent = `${status.subscriberCount} subscribed`;
 }
 
 $('#email-form').addEventListener('submit', async (event) => {
@@ -54,20 +52,27 @@ $('#email-form').addEventListener('submit', async (event) => {
   button.disabled = true;
   try {
     const result = await request('/api/subscribe', { method: 'POST', body: JSON.stringify({ email: $('#email').value }) });
-    setStatus(result.message);
+    setStatus($('#action-status'), result.message);
     await refresh();
-  } catch (error) { setStatus(error.message, true); } finally { button.disabled = false; }
+  } catch (error) { setStatus($('#action-status'), error.message, true); } finally { button.disabled = false; }
 });
 
-$('#test-email').addEventListener('click', async (event) => {
-  const button = event.currentTarget; button.disabled = true; setStatus('Sending test email...');
+$('#unsubscribe-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const button = event.currentTarget.querySelector('button[type="submit"]');
+  const status = $('#unsubscribe-status');
+  button.disabled = true;
   try {
-    const result = await request('/api/test-email', {
+    const result = await request('/api/unsubscribe', {
       method: 'POST',
-      body: JSON.stringify({ email: $('#email').value })
+      body: JSON.stringify({ email: $('#unsubscribe-email').value })
     });
-    setStatus(result.message);
-  } catch (error) { setStatus(error.message, true); } finally { button.disabled = false; }
+    setStatus(status, result.message);
+  } catch (error) {
+    setStatus(status, error.message, true);
+  } finally {
+    button.disabled = false;
+  }
 });
 
-refresh().catch((error) => setStatus(error.message, true));
+refresh().catch((error) => setStatus($('#action-status'), error.message, true));

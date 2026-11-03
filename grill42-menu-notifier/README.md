@@ -64,18 +64,20 @@ Email subscriptions are stored in the Supabase `public.subscriptions` table. Ema
 
 ## Scheduling
 
-The default checks run at 11:01 AM and 4:31 PM in `America/Toronto`. Change `TIMEZONE` and `CHECK_SCHEDULES` in `.env` to configure them. `CHECK_SCHEDULES` accepts semicolon-separated five-field cron expressions, for example:
+The default checks target 11:01 AM and 4:31 PM in `America/Toronto`. Change `TIMEZONE` and `CHECK_SCHEDULES` in `.env` to configure them. `CHECK_SCHEDULES` accepts semicolon-separated five-field cron expressions, for example:
 
 ```env
 TIMEZONE=America/Toronto
 CHECK_SCHEDULES=1 11 * * *;31 16 * * *
 ```
 
-When running with `npm start`, these are server-side jobs, so the browser does not need to stay open.
+When running with `npm start` on a continuously running server, these are server-side jobs, so the browser does not need to stay open.
 
 ## Vercel deployment
 
-The app is configured as a Vercel serverless function. `vercel.json` schedules the Toronto checks using UTC cron entries for both daylight-saving offsets; the endpoint verifies which entry corresponds to the configured local time. If you change `TIMEZONE` or `CHECK_SCHEDULES`, update the corresponding UTC schedules in `vercel.json` too. Each Vercel cron entry runs once a day, compatible with Vercel Hobby scheduling precision.
+The app is configured as a Vercel serverless function. `vercel.json` targets the Toronto checks using UTC cron entries for both daylight-saving offsets; the endpoint verifies which entry corresponds to the configured local time. If you change `TIMEZONE` or `CHECK_SCHEDULES`, update the corresponding UTC schedules in `vercel.json` too.
+
+**Vercel Hobby does not guarantee exact notification times.** Its cron jobs have per-hour precision and may run up to 59 minutes after their configured time. The configured targets are 11:01 AM and 4:31 PM Eastern, but on Hobby notifications can arrive as late as 12:00 PM and 5:30 PM, respectively. Minute-level timing requires a plan with per-minute cron precision or an external scheduler.
 
 Set these variables in the Vercel project (Production, and Preview if needed): `SUPABASE_URL`, `SUPABASE_SECRET`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_FROM`, `TIMEZONE`, `CHECK_SCHEDULES`, and a long random `CRON_SECRET`. The cron endpoint requires `CRON_SECRET` as a bearer token. Do not deploy `VERCEL_TOKEN` as an application environment variable.
 
@@ -97,6 +99,7 @@ The scraper opens the live page with Playwright, waits for the client-rendered c
 - `GET /api/menu` - current Grill 42 menu
 - `POST /api/check-menu` - run a manual scrape
 - `POST /api/subscribe` - subscribe `{ "email": "you@example.com" }` to scheduled menu emails
+- `POST /api/unsubscribe` - remove `{ "email": "you@example.com" }` from scheduled menu emails
 - `POST /api/test-email` - send the current menu to the subscribed email in `{ "email": "you@example.com" }`
 - `GET /api/status` - last result, next check, timezone, and subscriber count
 - `GET /api/cron` - authenticated Vercel scheduled check; requires `CRON_SECRET`

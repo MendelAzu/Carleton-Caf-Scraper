@@ -6,7 +6,7 @@ const { DateTime } = require('luxon');
 const path = require('path');
 const { scrapeMenu } = require('./services/scraper');
 const { sendMenuEmail, sendTestEmail } = require('./services/email');
-const { connectToDatabase, getSubscriberCount, subscribeEmail } = require('./services/subscriptions');
+const { connectToDatabase, getSubscriberCount, subscribeEmail, unsubscribeEmail } = require('./services/subscriptions');
 const { startScheduler, getNextScheduledCheck, schedules, timezone } = require('./services/scheduler');
 
 const app = express();
@@ -114,6 +114,23 @@ app.post('/api/subscribe', async (request, response) => {
   } catch (error) {
     console.error(`[server] Subscription save failed: ${error.stack || error.message}`);
     response.status(500).json({ error: 'Could not save your subscription. Please try again later.' });
+  }
+});
+
+app.post('/api/unsubscribe', async (request, response) => {
+  const email = String(request.body?.email || '').trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return response.status(400).json({ error: 'Enter a valid email address.' });
+  }
+  try {
+    const result = await unsubscribeEmail(email);
+    response.json({
+      ...result,
+      message: result.unsubscribed ? 'Your email has been removed from menu notifications.' : 'This email is not subscribed to menu notifications.'
+    });
+  } catch (error) {
+    console.error(`[server] Subscription removal failed: ${error.stack || error.message}`);
+    response.status(500).json({ error: 'Could not remove your subscription. Please try again later.' });
   }
 });
 
