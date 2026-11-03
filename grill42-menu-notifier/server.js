@@ -165,14 +165,23 @@ app.get('/api/status', async (request, response) => {
 
 async function startServer() {
   await connectToDatabase();
-  startScheduler(({ scheduledKey }) => runMenuCheck({ sendEmail: true, scheduledKey }));
-  app.listen(port, () => {
-    console.log(`Grill 42 Menu Notifier listening at http://localhost:${port}`);
+  const server = await new Promise((resolve, reject) => {
+    const listener = app.listen(port);
+    listener.once('error', reject);
+    listener.once('listening', () => resolve(listener));
   });
+  startScheduler(({ scheduledKey }) => runMenuCheck({ sendEmail: true, scheduledKey }));
+  console.log(`Grill 42 Menu Notifier listening at http://localhost:${port}`);
+  return server;
 }
 
 if (require.main === module) {
   startServer().catch((error) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(`[server] Port ${port} is already in use. Stop the existing server or set PORT to a different port (for example, PORT=3001).`);
+      process.exitCode = 1;
+      return;
+    }
     console.error(`[server] Startup failed: ${error.stack || error.message}`);
     process.exitCode = 1;
   });

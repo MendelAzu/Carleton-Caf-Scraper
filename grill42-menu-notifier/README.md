@@ -47,6 +47,8 @@ A Node.js and Express website that checks the Carleton University Teraanga Commo
 
 5. Open `http://localhost:3000` in your browser. Do not open `public/index.html` directly; the page needs the running Express server for its API requests.
 
+If startup reports that port 3000 is already in use, the server is likely already running in another terminal. Stop that instance with `Ctrl+C` in its terminal before starting it again, or set `PORT=3001` in `.env` and open `http://localhost:3001`.
+
 For Gmail, use these SMTP values and a Google App Password, not your regular Gmail password:
 
 ```env
