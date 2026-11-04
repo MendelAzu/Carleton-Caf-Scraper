@@ -53,21 +53,14 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 .wordmark {
   display: inline-flex;
-  flex-direction: column;
-  color: var(--ink);
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.65rem;
-  font-weight: 700;
-  line-height: .88;
+  align-items: center;
   text-decoration: none;
 }
-.wordmark span { letter-spacing: -.06em; }
-.wordmark small {
-  margin-top: 5px;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: .55rem;
-  letter-spacing: .16em;
-  text-align: center;
+.wordmark img {
+  display: block;
+  width: 140px;
+  max-height: 72px;
+  object-fit: contain;
 }
 .header-divider {
   width: 1px;
@@ -179,7 +172,7 @@ button.secondary:hover { color: white; background: var(--ink); }
 
 @media (max-width: 760px) {
   .header-inner { width: min(100% - 32px, 600px); min-height: 72px; }
-  .wordmark { font-size: 1.45rem; }
+  .wordmark img { width: 124px; }
   .header-divider { margin: 0 14px; }
   .header-context { font-size: .84rem; }
   .shell { width: min(100% - 32px, 600px); padding-top: 39px; }
