@@ -2,6 +2,7 @@ const { chromium } = require('playwright');
 
 const DEFAULT_URL = 'https://carleton.mydininghub.ca/en/location/teraanga-commons-dining-hall';
 const STATION_NAME = 'The Grill 42';
+let serverlessChromiumPathPromise = null;
 
 function cleanText(value) {
   return (value || '').replace(/\s+/g, ' ').trim();
@@ -92,9 +93,16 @@ async function launchServerlessBrowser() {
     process.env.AWS_LAMBDA_JS_RUNTIME = 'nodejs20.x';
   }
   const serverlessChromium = require('@sparticuz/chromium');
+  if (!serverlessChromiumPathPromise) {
+    serverlessChromiumPathPromise = serverlessChromium.executablePath().catch((error) => {
+      serverlessChromiumPathPromise = null;
+      throw error;
+    });
+  }
+  const executablePath = await serverlessChromiumPathPromise;
   return chromium.launch({
     args: serverlessChromium.args,
-    executablePath: await serverlessChromium.executablePath(),
+    executablePath,
     headless: true
   });
 }
